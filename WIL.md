@@ -108,3 +108,9 @@ In JavaScript, arrays have a `map()` method that is commonly used for mapping da
   If no key is specified, React will present a **warning** and use the array index as a key by default. Using the array index as a key is problematic when trying to re-order a list’s items or inserting/removing list items. Explicitly passing `key={i}` silences the warning but has the same problems as array indices and is not recommended in most cases!\
   \
   **Keys do not need to be globally unique; they only need to be unique between components and their siblings.**
+
+- There are **no** comment in JSX. To insert  comments, you must use `JS` syntax inside braces `{}`:
+  ```javascript
+  { /* This is a valid JSX comment */ }
+  ```
+  Yes, it's hugly AF.
