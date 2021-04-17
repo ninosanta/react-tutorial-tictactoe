@@ -74,4 +74,37 @@ Lifting state into a parent component is common when React components are refact
     // onClick={ () => props.onClick() } did not need parentheses!
   }
   ``` 
+- We know that React elements are first-class JavaScript objects ;we can pass them around in our applications. To render multiple items in React, we can use an array of React elements.\
+In JavaScript, arrays have a `map()` method that is commonly used for mapping data to other data, for example:
+  ```javascript
+  const numbers = [1, 2, 3];
+  const doubled = numbers.map(x => x * 2); // [2, 4, 6]
+  ```
+  This can turn to be useful when, for example, we need to map an history of something (e.g. a game's moves) to buttons that permits to jump within the history. 
 
+- Each child in an array or iterator should have a unique “key” prop.\
+  When we render a list, React stores some information about each rendered list item. When we update a list, React needs to determine what has changed. We could have added, removed, re-arranged, or updated the list’s items.\
+  Imagine transitioning from:
+  ```html javascript
+  <li>Alexa: 7 tasks left</li>
+  <li>Ben: 5 tasks left</li>
+  ```
+  to
+  ```html javascript
+  <li>Ben: 9 tasks left</li>
+  <li>Claudia: 8 tasks left</li>
+  <li>Alexa: 5 tasks left</li>
+  ```
+  In addition to the updated counts, a human reading this would probably say that we swapped Alexa and Ben’s ordering and inserted Claudia between Alexa and Ben. However, React is a computer program and does not know what we intended. Because React cannot know our intentions, we need to specify a _key_ property for each list item to differentiate each list item from its siblings. One option would be to use the strings `alexa`, `ben`, `claudia`. If we were displaying data from a database, Alexa, Ben, and Claudia’s database IDs could be used as keys.
+  ```html javascript
+  <li key={user.id}>{user.name}: {user.taskCount} tasks left</li>
+  ```
+  When a list is re-rendered, React takes each list item’s key and searches the previous list’s items for a matching key. If the current list has a key that didn’t exist before, React creates a component. If the current list is missing a key that existed in the previous list, React destroys the previous component. If two keys match, the corresponding component is moved. Keys tell React about the identity of each component which allows React to maintain state between re-renders. If a component’s key changes, the component will be destroyed and re-created with a new state.\
+  \
+  `key` is a special and reserved property in React (along with `ref`, a more advanced feature). When an element is created, React extracts the `key` property and stores the key directly on the returned element. Even though `key` may look like it belongs in `props`, `key` cannot be referenced using `this.props.key`. React automatically uses `key` to decide which components to update. A component cannot inquire about its `key`.\
+  \
+  **It’s strongly recommended that you assign proper keys whenever you build dynamic lists.** If you don’t have an appropriate key, you may want to consider restructuring your data so that you do.\
+  \
+  If no key is specified, React will present a **warning** and use the array index as a key by default. Using the array index as a key is problematic when trying to re-order a list’s items or inserting/removing list items. Explicitly passing `key={i}` silences the warning but has the same problems as array indices and is not recommended in most cases!\
+  \
+  **Keys do not need to be globally unique; they only need to be unique between components and their siblings.**

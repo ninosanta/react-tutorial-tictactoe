@@ -4,69 +4,31 @@ import './index.css';
 
 
 /**
- * BOARD COMPONENT: 
- *   It renders 9 squares. The best approach is to store the game’s state in
- *   the parent Board component instead of in each Square.
- *   The Board component can tell each Square what to display by passing a prop,
- *   just like we did when we passed a number to each Square. */
+ * BOARD COMPONENT:
+ *   It renders 9 squares.
+ */
 class Board extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      squares: Array(9).fill(null),  // array of 9 nulls correspondig to the 9 squares
-      xIsNext: true,  // X is the first move by default
-    };
-  }
-
-
-  /* The state is stored in the Board component instead of the individual Square 
-    * components. This will allow it to determine the winner in the future.
-    * The Square components receive values from the Board component and inform the
-    * Board component when they’re clicked 
-    *    => the Square components are controlled components */
-  handleClick(i) {
-    const squares = this.state.squares.slice();  /* we call .slice() to create a copy
-                                                  * of the squares array to modify instead 
-                                                  * of modifying the existing array */
-    if (calculateWinner(squares) || squares[i]) {
-      return;  // early return if someone has already won or if a square is already filled
-    }
-    squares[i] = this.state.xIsNext ? 'X' : 'O' ;  // history
-    this.setState({
-      squares: squares,
-      xIsNext: !this.state.xIsNext,  // flip the value
-    });
-    
-  }
 
   renderSquare(i) {
-    // this pass two props (value and onClick) to square
-	  return <Square 
-              value={this.state.squares[i]} /* Each Square will now receive a value prop
-                                             * that will either be 'X', 'O', or null for 
-                                             * empty squares. */
-              onClick={ () => this.handleClick(i) }  /* Since state is considered to be private 
-                                                      * to a component that defines it, we cannot 
-                                                      * update the Board’s state directly from Square.
-                                                      * Insted this will be the function that's passed
-                                                      * down from the Board to Square and called
-                                                      * by Square when a square is clicked */
-            />;
-              
+    // method passes two props (value and onClick) to square:
+	  return (
+      <Square 
+        value={ this.props.squares[i] } /* Each Square will now receive a value prop
+                                         * that will either be 'X', 'O', or null for 
+                                         * empty squares. */
+        onClick={ () => this.props.onClick(i) }  /* Since state is considered to be private 
+                                                  * to a component that defines it, we cannot 
+                                                  * update the Board’s state directly from Square.
+                                                  * Insted this will be the function that's passed
+                                                  * down from the Board to Square and called
+                                                  * by Square when a square is clicked */
+      />
+    );
   }
 
   render() {
-    const winner = calculateWinner(this.state.squares);
-    let status;
-    if (winner) {
-      status = "Winner: " + winner;
-    } else {
-      status = "Next player: " + (this.state.xIsNext ? 'X' : 'O');  
-    }
-    
     return (
       <div>
-        <div className="status">{status}</div>
         <div className="board-row">
           {this.renderSquare(0)}
           {this.renderSquare(1)}
@@ -87,34 +49,10 @@ class Board extends React.Component {
   }
 }
 
-/** 
- * SQUARE COMPONENT
- *  It renders a single <button> */
-//  class Square extends React.Component {
-//    /* This constructor is nomore required since
-//     * Square no longer keeps track of the game’s state */
-//   // constructor(props) {
-//   //   /** 
-//   //    * In JavaScript classes, you need to always call super when defining
-//   //    * the constructor of a subclass. All React component classes that have
-//   //    * a constructor should start with a super(props) call: */
-//   //   super(props);
-//   //   this.state = { value: null };
-//   // }
 
-//   render() {
-//     return (
-//       <button 
-//         className="square" 
-//         onClick={ () => this.props.onClick() }
-//       >
-//         {this.props.value}
-//       </button>
-//     );
-//   }
-// }
-
-/* SQUARE FUNCTION COMPONENT */
+/**
+ * SQUARE FUNCTION COMPONENT 
+ */
 function Square(props) {
   // no more this.props. is needed!
     return(
@@ -131,17 +69,93 @@ function Square(props) {
 
 /**
  * GAME COMPONENT 
- *   It renders a board with placeholders values */
+ */
 class Game extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      history: [
+        { squares: Array(9).fill(null) }
+      ],
+      xIsNext: true,
+      stepNumber: 0,
+    };
+  }
+
+  handleClick(i) {
+    /* To ensures that if we “go back in time” and then make a new move from 
+     * that point, we throw away all the “future” history that would now become 
+     * incorrect: */
+    const history = this.state.history.slice(0, this.state.stepNumber + 1);
+    const current = history[history.length - 1];
+    const squares = current.squares.slice();  /* we call .slice() to create a copy
+                                               * of the squares array to modify instead 
+                                               * of modifying the existing array */
+    if (calculateWinner(squares) || squares[i]) {
+      return;  // early return if someone has already won or if a square is already filled
+    }
+    squares[i] = this.state.xIsNext ? 'X' : 'O' ;  // history
+    this.setState({
+      history: history.concat([ // unlike push(), the concat() method doesn’t mutate the original array, so we prefer it
+        {  
+          squares: squares
+        }
+      ]),
+      stepNumber: history.length,
+      xIsNext: !this.state.xIsNext,  // flip the value
+    });
+    
+  }
+
+  jumpTo(step) {
+    this.setState({
+      stepNumber: step,
+      xIsNext: (step % 2) === 0,
+    });
+  }
+
   render() {
+    const history = this.state.history;   
+    const current = history[this.state.stepNumber];  // render the current move according to stepNumber
+    const winner = calculateWinner(current.squares);
+
+    /* For each move in the tic-tac-toe game’s history, we create a list item <li> 
+     * which contains a button <button>. 
+     * The button has a onClick handler which calls a method called this.jumpTo() */
+    const moves = history.map((step, move) => {
+      const desc = move ? "Go to move #" + move : "Go to game start";
+      /* In the tic-tac-toe game’s history, each past move has a unique ID associated with it: 
+       * it’s the sequential number of the move. The moves are never re-ordered, deleted, or
+       * inserted in the middle, so it’s safe to use the move index as a key. */
+      return (
+        <li key={move}>
+          <button
+            onClick={ () => this.jumpTo(move) }
+          >
+            {desc}
+          </button>
+        </li>
+      );
+    });
+
+    let status;
+    if (winner) {
+      status = "Winner: " + winner;
+    } else {
+      status = "Next player: " + (this.state.xIsNext ? 'X' : 'O');  
+    }
+  
     return (
       <div className="game">
         <div className="game-board">
-          <Board />
+          <Board 
+            squares={ current.squares }
+            onClick={ (i) => this.handleClick(i) }
+          />
         </div>
         <div className="game-info">
-          <div>{/* status */}</div>
-          <ol>{/* TODO */}</ol>
+          <div>{ status }</div>
+          <ol>{ moves }</ol>
         </div>
       </div>
     );
