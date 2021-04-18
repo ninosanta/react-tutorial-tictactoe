@@ -1,5 +1,7 @@
 # What I have Learned
 
+## Through the tutorial
+
 - A React.Component takes in parameters, called props (short for “properties”), and returns a hierarchy of views to display via the render method. In particular, render returns a React element, which is a lightweight description of what to render:
     ```javascript
     class ShoppingList extends React.Component {
@@ -114,3 +116,105 @@ In JavaScript, arrays have a `map()` method that is commonly used for mapping da
   { /* This is a valid JSX comment */ }
   ```
   Yes, it's hugly AF.
+
+## Through my notes
+
+- *Props* are **immutable** pieces of data that are **passed from parents into child components**.\
+  In JSX, every component's attribute is automatically converted to a prop parameter:
+  - `<Header headerText='Hello'/>` then `props.headerText` will contain the string "hello"
+  - `props` will be the argument of the Component Function and collects all the **read only** passed props
+  - A `prop` may be any JS object, or other React elements
+
+- *State* is where a component holds data, locally to the component:
+  - When state changes, usually the component needs to be re-rendered
+  - State is **private to the component** and is mutable from inside the component, **only**. Therefore, it is an object containing local data, private to a component, that may be mutated by the component itself
+  - To define a state variable, use the `useState` hook
+
+- Hooks are special functions called by function components. They permits to access advanced features in function components:
+  - Special mechanism for overcoming some limitations of “pure” functions, **in a controlled way** 
+  - Managing `state`, accessing external resources, having side-effects, ...
+  - Most popular hooks:
+      - `useState`: defines a state variable in the component
+      - `useEffect`: defines a side-effect (i.e., read and write anything outside the render tree) during the component lifecycle
+      - `useContext`: acts as a context consumer for the current component i.e., it is used for accessing the general context of the application
+- `useState` creates a new `state` variable whose current value can be accessed at any time, and it can be updated through a specific function with a new value or with a callback function:
+  ```javascript
+  import React, { useState } from 'react';
+  
+  function ShortText(props) {
+    const [hidden, setHidden] = useState(true);
+    return (
+      <span>
+        { hidden ?
+          `${props.text
+            .substr(0, props.maxLength)}...` : props.text }
+        { 
+          hidden ? (
+            <a onClick={() => setHidden(false)}>more</a>
+          ) : (
+            <a onClick={() => setHidden(true)}>less</a>
+          )
+        }
+      </span>
+    );
+  }
+  ```
+  - `const [hidden, setHidden] = useState(true)` creates a new `state` variable
+  - `hidden` is the name of the variable
+  - `setHidden` is the update function
+  - `true` is the default initial value that's **only** used during the first render of the component. It can be a value or a function
+
+   **Never** modify the state variable directly, always use the `setVariable` function instead! Declare it as a `const` would be fine.\
+  Note that the `setVariable()` function will replace the current state with the new one and trigger a re-render!\
+  This setter function receives an expression that can be:
+    - A new value:
+      ```javascript
+      setHidden(false);
+      ```
+      This value depend on `props` and constant values and will replace the current one. For consistent rendering, the value should have the same tipe of the state variable to be replaced.
+    - A callback:
+      ```javascript
+      setSteps(oldSteps => oldSteps + 1); 
+      ```
+      The function return value will **replace** the current state.\
+      When the new state depends on old state, we **must** provide a calback! Otherwise updates may be lost:
+      ```javascript
+      setSteps(step + 1)  // is wrong AF
+      ```
+      It follows that **all** modifications to the state must be requested through `setVariable(newVlue)` where `newValue` as a callback function must return **new** state value and must **not** mutate the passed-in state. Beware that the modification will be applied **asynchronously** because `state` changes are usually determinated by asynchronous events (e.g. `onClick()`):
+      ```javascript
+      function WelcomeButton(props) {
+        const [english, setEnglish] = useState(true);
+
+        /* State change implemented as an arrow function: */
+        const toggleLanguage = () => {
+          setEnglish( e => !e );
+        }
+        return (
+          <button onClick={toggleLanguage}>
+              {english ? 'Hello' : 'Ciao'}
+          </button>
+        );
+      }
+      ```
+
+  Do you want multiple `state` variables? Just call `useState` many times:
+  ```javascript
+  function Example(props) {
+    const [hidden, setHidden] = useState(true) ;
+    const [count, setCount] = useState(0) ;
+    const [mode, setMode] = useState('view') ;
+    /* ... */
+    setHidden(false) ;
+    /* ... */
+    setCount( c => c+1 ) ;
+    /* ... */
+    setMode('edit') ;
+    /* ... */
+  }
+  ```
+  The variables above will be all independent from each other and the **global** state of the component will be a combination of all its `state` variables.
+  
+
+
+
